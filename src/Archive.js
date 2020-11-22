@@ -301,8 +301,8 @@ function archiveOldData(company) {
       }
     });
 
-    // SpreadsheetApp.getActiveSpreadsheet().deleteSheet(archiveSheet);
-    // SpreadsheetApp.getActiveSpreadsheet().deleteSheet(logSheet);
+    SpreadsheetApp.getActiveSpreadsheet().deleteSheet(archiveSheet);
+    SpreadsheetApp.getActiveSpreadsheet().deleteSheet(logSheet);
     PropertiesService.getScriptProperties().deleteProperty(executionPropName);
   } catch (e) {
     console.error(e.message);
