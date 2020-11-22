@@ -1,0 +1,20 @@
+{
+  "name": "medpb-client-library",
+  "version": "1.0.0",
+  "description": "MedPB Client Library",
+  "scripts": {
+    "deploy": "clasp push",
+    "deployProd": "node updateClaspJson prod && clasp push",
+    "deployTest": "node updateClaspJson test && clasp push"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/N8Sayer/medpb-controller.git"
+  },
+  "author": "Nate Sargent",
+  "license": "ISC",
+  "dependencies": {
+    "@types/google-apps-script": "^1.0.17",
+    "json-update": "^5.3.0"
+  }
+}
