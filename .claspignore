@@ -1,0 +1,5 @@
+node_modules/**
+.gitignore
+jsconfig.json
+updateClaspJson.js
+yarn.lock
