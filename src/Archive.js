@@ -1,3 +1,25 @@
+function testZips() {
+  const data = [
+    'https://drive.google.com/file/d/1RkZuoEthecNmMNYxkSJglWhx09ov6IE6/view?usp=drivesdk',
+    'https://drive.google.com/file/d/1R_3uUy5o7DAuDMVGBRoP9XJss-TTIURx/view?usp=drivesdk',
+    'https://drive.google.com/file/d/1MUvhfmUgAXDYgcFjy6E2pIhCepVcjvjs/view?usp=drivesdk',
+    'https://drive.google.com/file/d/1q6J7Cl1zb-VJQzW7LoLQE1Cz5frJKpdf/view?usp=drivesdk',
+    'https://drive.google.com/file/d/1_APQIs5WgnY6jr1L3WNhIwWbUvi-jEdU/view?usp=drivesdk',
+  ];
+  const ids = [];
+  const blobs = data.map(function (url, index) {
+    const id = getIdFromUrl(url);
+    const blob = DriveApp.getFileById(id).getBlob();
+    const newName = blob.getName().replace(/\//g, '\\');
+    blob.setName(newName);
+    return blob;
+  });
+  const zip = Utilities.zip(blobs, `Test-File.zip`);
+
+  const folder = DriveApp.getFolderById('1NqUZFUJZdTExacbBBS5c8PHfM4h_R_S7');
+  folder.createFile(zip);
+}
+
 function archiveSheet() {
   const DAYS_TO_PRESERVE = 14;
 
@@ -296,7 +318,9 @@ function zipAndTrashImportFiles(data, folder, filename, urlCol) {
       const id = getIdFromUrl(row[urlCol]);
       ids.push(id);
       const blob = DriveApp.getFileById(id).getBlob();
-      blob.setName(`${index}-${blob.getName()}`);
+      const newName = blob.getName().replace(/\//g, '\\');
+      // Utilities.zip interprets forward slashes as file paths, so we replace with a backslash instead.
+      blob.setName(newName);
       return blob;
     });
   const zip = Utilities.zip(blobs, `${filename}.zip`);
