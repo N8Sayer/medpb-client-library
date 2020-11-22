@@ -228,25 +228,27 @@ function archiveOldData(company) {
     const archiveDateCol = archiveHeaders.indexOf('Process Date');
     const archiveUrlCol = archiveHeaders.indexOf('Url');
 
+    let currentPiece = 0;
     const currentPieceKey = `archive-${company}-currentPiece`;
-    const currentPieceProp = PropertiesService.getScriptProperties().getProperty(
-      currentPieceKey
-    );
-    let currentPiece;
-    if (archiveData.length > MAX_CHUNK) {
-      currentPiece = currentPieceProp ? parseInt(currentPieceProp, 10) : 0;
+    if (lastExecution) {
+      const currentPieceProp = PropertiesService.getScriptProperties().getProperty(
+        currentPieceKey
+      );
+      currentPiece = parseInt(currentPieceProp, 10);
     }
 
-    Logger.log('Archiving files and files log');
+    Logger.log(
+      `Archiving files and files log, starting with part ${currentPiece + 1}`
+    );
     for (
       let x = currentPiece * MAX_CHUNK;
       x < archiveData.length;
       x += MAX_CHUNK
     ) {
       Logger.log(
-        `Archiving part ${Math.floor(x / MAX_CHUNK) + 1} of ${
-          Math.ceil(archiveData.length / MAX_CHUNK) + 1
-        }`
+        `Archiving part ${Math.floor(x / MAX_CHUNK) + 1} of ${Math.ceil(
+          archiveData.length / MAX_CHUNK
+        )}`
       );
       const batch = [archiveHeaders, ...archiveData.slice(x, x + MAX_CHUNK)];
 
@@ -299,8 +301,8 @@ function archiveOldData(company) {
       }
     });
 
-    SpreadsheetApp.getActiveSpreadsheet().deleteSheet(archiveSheet);
-    SpreadsheetApp.getActiveSpreadsheet().deleteSheet(logSheet);
+    // SpreadsheetApp.getActiveSpreadsheet().deleteSheet(archiveSheet);
+    // SpreadsheetApp.getActiveSpreadsheet().deleteSheet(logSheet);
     PropertiesService.getScriptProperties().deleteProperty(executionPropName);
   } catch (e) {
     console.error(e.message);
@@ -310,11 +312,11 @@ function archiveOldData(company) {
 function zipAndTrashImportFiles(data, folder, filename, urlCol) {
   const ids = [];
   const blobs = data
-    .filter(function (row, index) {
+    .filter(function (row) {
       const id = getIdFromUrl(row[urlCol]);
       return !!id;
     })
-    .map(function (row, index) {
+    .map(function (row) {
       const id = getIdFromUrl(row[urlCol]);
       ids.push(id);
       const blob = DriveApp.getFileById(id).getBlob();
@@ -325,7 +327,7 @@ function zipAndTrashImportFiles(data, folder, filename, urlCol) {
     });
   const zip = Utilities.zip(blobs, `${filename}.zip`);
   folder.createFile(zip);
-  const access = folder.getAccess(Session.getActiveUser()).toString();
+  // const access = folder.getAccess(Session.getActiveUser()).toString();
   //  if (access === 'FILE_ORGANIZER' || access === 'OWNER') {
   //    ids.forEach(function(id) {
   //      const file = DriveApp.getFileById(id);
