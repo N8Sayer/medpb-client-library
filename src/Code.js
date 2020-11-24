@@ -59,11 +59,7 @@ function enableTriggers(sheetName) {
   }
 
   ScriptApp.newTrigger('scanSheet').timeBased().everyMinutes(5).create();
-  ScriptApp.newTrigger('archiveSheet')
-    .timeBased()
-    .everyDays(14)
-    .onWeekDay(1)
-    .create();
+  ScriptApp.newTrigger('archiveSheet').timeBased().everyDays(14).create();
   PropertiesService.getScriptProperties().setProperty(
     sheetName,
     new Date().toISOString()
