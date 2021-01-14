@@ -5,9 +5,9 @@ function sendRecordsToApi(recordObj) {
   var apiToken = 'c75ec36977e644809d214e6ef4dec35b';
   var recipientUrl = 'https://www.grade.us/api/v2/profiles/%s/recipients';
   var options = {
-    method      : "POST",
-    contentType : 'application/json',
-    headers     : {
+    method: 'POST',
+    contentType: 'application/json',
+    headers: {
       Accept: 'application/json',
       Authorization: Utilities.formatString('Token %s', apiToken),
     },
@@ -18,19 +18,19 @@ function sendRecordsToApi(recordObj) {
     200: 'Success',
     401: 'Unauthorized Request',
     422: 'Possible Duplicate',
-    500: 'Server Error'
+    500: 'Server Error',
   };
   var output = {
     status: '',
     success: [],
     failed: [],
     matched: recordObj.matched,
-    total: recordObj.total
+    total: recordObj.total,
   };
-  Object.keys(recordObj.records).forEach(function(profileId) {
+  Object.keys(recordObj.records).forEach(function (profileId) {
     var url = Utilities.formatString(recipientUrl, profileId);
     var records = recordObj.records[profileId];
-    for (var x = 0; x < records.length; x+= maxSend) {
+    for (var x = 0; x < records.length; x += maxSend) {
       var tempRecordSlice = records.slice(x, x + maxSend);
       options.payload = JSON.stringify({ recipients: tempRecordSlice });
       try {
@@ -46,7 +46,7 @@ function sendRecordsToApi(recordObj) {
         if (json.error) {
           throw json.error;
         }
-      } catch(error) {
+      } catch (error) {
         console.log(error);
       }
     }
@@ -56,15 +56,19 @@ function sendRecordsToApi(recordObj) {
 
 // Sort records by Profile ID
 function sortRecords(records) {
-  var clientSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Clients');
-  var clientData = clientSheet.getDataRange().getDisplayValues(); 
-  var converter = getConverter();
-  
+  var clientSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(
+    'Clients'
+  );
+  var clientData = clientSheet.getDataRange().getDisplayValues();
+  var recordConverter = getConverter(false);
+  var matchConverter = getConverter(true);
+
   var output = {};
   var count = 0;
-  records.forEach(function(record) {
-//    Logger.log('Adding client info');
-    var client = clientMatch(record, clientData);
+  records.forEach(function (record) {
+    Logger.log('Adding client info');
+    var client = clientMatch(record, clientData, matchConverter);
+    console.log(client);
     if (!client) {
       return;
     }
@@ -72,7 +76,7 @@ function sortRecords(records) {
     var id = client['Profile ID'];
     output[id] = output[id] || [];
     var formattedRecord = {};
-    converter.forEach(function(obj) {
+    recordConverter.forEach(function (obj) {
       if (obj.type !== 'MedPB') {
         return;
       }
@@ -81,23 +85,28 @@ function sortRecords(records) {
         formattedRecord[obj.name] = val;
       }
     });
-    if (formattedRecord.first_name && (formattedRecord.email_address || formattedRecord.phone_number)) {
+    if (
+      formattedRecord.first_name &&
+      (formattedRecord.email_address || formattedRecord.phone_number)
+    ) {
       output[id].push(formattedRecord);
     }
   });
+  console.log('Return sorted records');
+  console.log(records.length);
   return {
     records: output,
     matched: count,
-    total: records ? records.length : 0
+    total: records ? records.length : 0,
   };
 }
 
 // Strip duplicate records
 function removeDuplicates(records) {
   var output = [];
-  records.forEach(function(record) {
+  records.forEach(function (record) {
     var isUnique = true;
-    output.forEach(function(outputRecord) {
+    output.forEach(function (outputRecord) {
       if (!isUnique) {
         return;
       }

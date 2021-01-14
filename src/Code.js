@@ -150,8 +150,8 @@ function scanSheet() {
         'Processed %s, %s accounts total. %s succeeded, %s failed, %s not matched.',
         fileObj.name,
         statusObj.total,
-        statusObj.success.length,
-        statusObj.failed.length,
+        statusObj.success ? statusObj.success.length : 0,
+        statusObj.failed ? statusObj.failed.length : 0,
         mismatchCount
       );
       addLog(summary, now);
@@ -189,8 +189,10 @@ function processFile(obj) {
     };
   }
 
+  console.log('Parsing records');
   var json = JSON.parse(stringData);
   var verifiedRecords = verifyClientRules(json);
+  console.log('Verified client rules');
   var sortedRecordsObj = sortRecords(verifiedRecords);
   Logger.log('Sorted and parsed records');
 
@@ -227,7 +229,7 @@ function getConverter(isObj) {
 }
 
 // Matches a client by first name, last name, and ID
-function clientMatch(recordObj, data) {
+function clientMatch(recordObj, data, converter) {
   //  Logger.log('Matching client');
   if (!data) {
     data = SpreadsheetApp.getActiveSpreadsheet()
@@ -249,7 +251,9 @@ function clientMatch(recordObj, data) {
     }
   });
 
-  var converter = getConverter(true);
+  if (!converter) {
+    converter = getConverter(true);
+  }
   var recordKeys = {
     firstName: converter['First Name'].jsonKey,
     lastName: converter['Last Name'].jsonKey,
@@ -259,37 +263,65 @@ function clientMatch(recordObj, data) {
       : null,
   };
 
-  for (var x = 0; x < clients.length; x++) {
-    var client = clients[x];
-    var matches = {
-      id:
-        recordObj[recordKeys.clinicId] &&
+  if (recordKeys.clinicId) {
+    for (var x = 0; x < clients.length; x++) {
+      var client = clients[x];
+      if (
+        !recordObj[recordKeys.clinicId] ||
+        !recordObj[recordKeys.clinicId].length
+      ) {
+        continue;
+      }
+
+      if (
         recordKeys.locationId &&
+        recordObj[recordKeys.locationId] &&
         recordObj[recordKeys.locationId].length
-          ? client['Clinic ID'].trim() == recordObj[recordKeys.clinicId] &&
-            client['Location ID'].trim() == recordObj[recordKeys.locationId]
-          : client['Clinic ID'].trim() == recordObj[recordKeys.clinicId],
-    };
-    if (matches.id) {
-      return client;
+      ) {
+        console.log([
+          client['Clinic ID'],
+          client['Location ID'],
+          recordObj[recordKeys.clinicId],
+          recordObj[recordKeys.locationId],
+        ]);
+        if (
+          client['Clinic ID'].trim() == recordObj[recordKeys.clinicId].trim() &&
+          client['Location ID'].trim() ==
+            recordObj[recordKeys.locationId].trim()
+        ) {
+          return client;
+        }
+      }
+
+      if (
+        !client['Location ID'] &&
+        !client['Location ID'].length &&
+        client['Clinic ID'].trim() == recordObj[recordKeys.clinicId].trim()
+      ) {
+        return client;
+      }
     }
   }
 
-  for (var x = 0; x < clients.length; x++) {
-    var client = clients[x];
-    var matches = {
-      firstName:
-        client['First Name'] &&
-        recordObj[recordKeys.firstName] &&
-        client['First Name'].toLowerCase().trim() ==
-          recordObj[recordKeys.firstName].toLowerCase().trim(),
-      lastName:
-        client['Last Name'] &&
-        recordObj[recordKeys.lastName] &&
-        client['Last Name'].toLowerCase().trim() ==
-          recordObj[recordKeys.lastName].toLowerCase().trim(),
-    };
-    if (matches.firstName && matches.lastName) {
+  for (var y = 0; y < clients.length; y++) {
+    var client = clients[y];
+    if (
+      !recordKeys.firstName ||
+      !recordObj[recordKeys.firstName] ||
+      !recordObj[recordKeys.firstName].length ||
+      !recordKeys.lastName ||
+      !recordObj[recordKeys.lastName] ||
+      !recordObj[recordKeys.lastName].length
+    ) {
+      continue;
+    }
+
+    if (
+      client['First Name'].toLowerCase().trim() ==
+        recordObj[recordKeys.firstName].toLowerCase().trim() &&
+      client['Last Name'].toLowerCase().trim() ==
+        recordObj[recordKeys.lastName].toLowerCase().trim()
+    ) {
       return client;
     }
   }
