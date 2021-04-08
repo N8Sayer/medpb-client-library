@@ -1,3 +1,12 @@
+function testtest() {
+  const item = '"Test me"';
+  var formattedItem =
+          item[0] === '"' && item[item.length - 1] === '"'
+            ? item.slice(1, item.length)
+            : item;
+  console.log(formattedItem);
+}
+
 function archiveSheet() {
   const DAYS_TO_PRESERVE = 14;
 
